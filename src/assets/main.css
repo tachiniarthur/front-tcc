@@ -1,1 +1,109 @@
 @import "tailwindcss";
+
+/* 🎨 Definição de cores customizadas via variáveis CSS */
+@theme {
+  --color-primary-50: #e1f3f5;
+  --color-primary-100: #b3dee5;
+  --color-primary-200: #80c7d4;
+  --color-primary-300: #4db0c2;
+  --color-primary-400: #269eb4;
+  --color-primary-500: #29808f;
+  --color-primary-600: #216a76;
+  --color-primary-700: #1a545e;
+  --color-primary-800: #123f47;
+  --color-primary-900: #0a2a30;
+
+  --color-secondary-50: #f5e4ef;
+  --color-secondary-100: #e6bcd8;
+  --color-secondary-200: #d693bf;
+  --color-secondary-300: #c56aa6;
+  --color-secondary-400: #b64691;
+  --color-secondary-500: #90286c;
+  --color-secondary-600: #752059;
+  --color-secondary-700: #5a1846;
+  --color-secondary-800: #400f32;
+  --color-secondary-900: #26071f;
+
+  --color-tertiary-50: #e9f6e4;
+  --color-tertiary-100: #c7e7b7;
+  --color-tertiary-200: #a2d788;
+  --color-tertiary-300: #7dc75a;
+  --color-tertiary-400: #61ba39;
+  --color-tertiary-500: #5cb337;
+  --color-tertiary-600: #4a902c;
+  --color-tertiary-700: #397021;
+  --color-tertiary-800: #284f17;
+  --color-tertiary-900: #172f0c;
+
+  --color-quaternary-50: #faefe2;
+  --color-quaternary-100: #f3d7b5;
+  --color-quaternary-200: #ebbd85;
+  --color-quaternary-300: #e3a356;
+  --color-quaternary-400: #dd8d32;
+  --color-quaternary-500: #b37615;
+  --color-quaternary-600: #8f5f10;
+  --color-quaternary-700: #6b470c;
+  --color-quaternary-800: #472f08;
+  --color-quaternary-900: #241804;
+
+  /* Tokens globais usados no tailwind.config.ts */
+  --primary: var(--color-primary-500);
+  --primary-foreground: #ffffff;
+
+  --secondary: var(--color-secondary-500);
+  --secondary-foreground: #ffffff;
+
+  --background: #ffffff;
+  --foreground: #0f172a;
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: var(--color-primary-400);
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: var(--color-tertiary-500);
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  /* Gradientes customizados */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
+  --gradient-secondary: linear-gradient(135deg, var(--color-secondary-400), var(--color-secondary-600));
+
+  /* Sombras customizadas */
+  --shadow-soft: 0 4px 10px rgba(0, 0, 0, 0.08);
+
+  /* Raio padrão para bordas */
+  --radius: 0.5rem;
+}
+
+/* 🔒 Esconde scrollbars em elementos */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 🎯 Estilização customizada para tooltips do tippy.js */
+.tippy-box[data-theme~="custom"] {
+  background-color: #1e293b;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 16px;
+}
+.tippy-box[data-theme~="custom"][data-placement^="top"] > .tippy-arrow {
+  color: #1e293b;
+}
