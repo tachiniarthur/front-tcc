@@ -1,7 +1,17 @@
-<script setup></script>
+<script setup>
+import Header from '@/components/home/Header.vue'
+import Footer from './components/home/Footer.vue';
+
+const isLoggedIn = true;
+</script>
 
 <template>
-  <router-view />
+  <div v-if="isLoggedIn">
+    <Header />
+      <router-view />
+    <Footer />
+  </div>
+  <div v-else>
+    <router-view />
+  </div>
 </template>
-
-<style scoped></style>

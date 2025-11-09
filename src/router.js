@@ -1,8 +1,13 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AuthForm from "@/pages/auth/AuthForm.vue";
 import Home from "@/pages/home/Home.vue";
+import Product from "@/pages/home/Product.vue";
 
 const routes = [
+  {
+    path: "/",
+    redirect: "/login",
+  },
   {
     path: "/login",
     name: "Login",
@@ -14,13 +19,14 @@ const routes = [
     component: AuthForm,
   },
   {
-    path: "/",
-    redirect: "/login",
-  },
-  {
     path: "/home",
     name: "Home",
     component: Home,
+  },
+  {
+    path: '/product/:id?',
+    name: 'product',
+    component: Product,
   }
 ];
 
