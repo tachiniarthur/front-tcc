@@ -1,0 +1,77 @@
+<template>
+  <div class="min-h-screen flex">
+    <PainelAuthComponent :title="'RECUPERAR SENHA'" :subtitle="'INFORME SEU E-MAIL PARA RECUPERAR SUA SENHA'" />
+
+    <div class="flex-1 bg-white text-gray-900 flex items-center justify-center p-8">
+      <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+          <GeometricLogo />
+          <h2 class="text-3xl font-bold mt-3 text-gray-900">
+            {{ "RECUPERAR SENHA" }}
+          </h2>
+        </div>
+
+        <form class="space-y-6" @submit.prevent="handleSubmit">
+          <div class="space-y-2">
+            <label for="email" class="text-sm font-medium text-black">E-mail</label>
+            <div class="relative">
+              <input id="email" type="email" placeholder="Digite seu e-mail" v-model="formData.email"
+                class="pl-4 h-12 w-full outline-none bg-transparent border-0 border-b-2 border-gray-200 rounded-none focus:border-gray-500 transition-colors" />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label for="password" class="text-sm font-medium text-black">Nova Senha</label>
+            <div class="relative">
+              <input id="password" :type="showPassword ? 'text' : 'password'" placeholder="Digite sua senha"
+                v-model="formData.password"
+                class="pl-4 pr-10 h-12 w-full outline-none bg-transparent border-0 border-b-2 border-gray-200 rounded-none focus:border-gray-500 transition-colors" />
+              <button type="button" @click="showPassword = !showPassword"
+                class="absolute right-3 top-3 text-black hover:text-gray-900 transition-colors"
+                aria-label="Alternar visibilidade da senha">
+                <font-awesome-icon :icon="showPassword ? 'eye-slash' : 'eye'" />
+              </button>
+            </div>
+          </div>
+
+
+          <div class="text-right">
+            <router-link :to="'/login'"
+              class="text-secondary-600 hover:text-secondary-700 text-sm transition-colors hover:cursor-pointer hover:underline">
+              <font-awesome-icon icon="arrow-left" class="mr-1" />
+              Voltar para login
+            </router-link>
+          </div>
+
+          <button type="submit"
+            class="w-full h-10 text-md font-semibold bg-black text-white hover:bg-gray-900 transition hover:cursor-pointer">
+            {{ isSignUp ? "CADASTRAR" : "ENTRAR" }}
+          </button>
+
+          <div class="text-center">
+            <span class="text-black/80 text-sm">
+              {{ isSignUp ? "Já tem uma conta?" : "Não tem uma conta?" }}
+            </span>
+            <button type="button" @click="switchMode"
+              class="ml-2 text-gray-600 hover:text-black font-medium text-sm transition-colors hover:cursor-pointer hover:underline">
+              {{ isSignUp ? "Entrar" : "Cadastrar" }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { reactive, ref } from "vue";
+import GeometricLogo from "@/components/auth/GeometricLogoComponent.vue";
+import PainelAuthComponent from "@/components/auth/PainelAuthComponent.vue";
+
+const showPassword = ref(false);
+const formData = reactive({ name: "", phone: "", email: "", password: "" });
+
+function handleSubmit() {
+  
+}
+</script>

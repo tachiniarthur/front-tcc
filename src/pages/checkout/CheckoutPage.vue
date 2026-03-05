@@ -1,0 +1,20 @@
+<template>
+  <div class="min-h-screen bg-white pt-24">
+
+    <h2 class="text-3xl font-light text-center mb-8">Checkout</h2>
+
+    <div class="max-w-3xl mx-auto px-6">
+      <p class="text-gray-700 mb-6">Esta é a página de checkout. Aqui você pode revisar seus itens no carrinho e
+        finalizar sua compra.</p>
+
+      
+
+      <p class="text-gray-700 mt-6">Obrigado por comprar conosco!</p>
+    </div>
+
+  </div>
+</template>
+
+<script setup>
+
+</script>

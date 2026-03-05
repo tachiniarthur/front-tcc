@@ -1,29 +1,23 @@
 <template>
   <div class="min-h-screen bg-white pt-24">
-    <!-- voltar -->
+
     <div class="max-w-7xl mx-auto px-6">
-      <RouterLink
-        to="/home"
-        class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mt-4"
-      >
-        <font-awesome-icon :icon="['fas','arrow-left']" />
+      <RouterLink to="/home" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mt-4">
+        <font-awesome-icon :icon="['fas', 'arrow-left']" />
         Voltar
       </RouterLink>
     </div>
 
-    <!-- conteúdo -->
+
     <main class="max-w-7xl mx-auto px-6 mt-6 mb-24">
-  <div v-if="produtoAtual" class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <!-- imagem -->
+      <div v-if="produtoAtual" class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+
         <div class="rounded-md overflow-hidden bg-gray-50">
-          <img
-            :src="produtoAtual.image || fallbackImage"
-            :alt="produtoAtual.title"
-            class="w-full h-[520px] lg:h-[560px] object-cover"
-          />
+          <img :src="produtoAtual.image || fallbackImage" :alt="produtoAtual.title"
+            class="w-full h-[520px] lg:h-[560px] object-cover" />
         </div>
 
-        <!-- infos -->
+
         <div>
           <h1 class="text-3xl font-medium tracking-tight text-gray-900">
             {{ produtoAtual.title }}
@@ -33,10 +27,7 @@
             {{ formatBRL(produtoAtual.price) }}
           </div>
 
-          <p
-            v-if="produtoAtual.description"
-            class="mt-6 text-gray-600 leading-relaxed max-w-2xl"
-          >
+          <p v-if="produtoAtual.description" class="mt-6 text-gray-600 leading-relaxed max-w-2xl">
             {{ produtoAtual.description }}
           </p>
 
@@ -45,11 +36,7 @@
               CARACTERÍSTICAS
             </h2>
             <ul class="mt-4 space-y-1.5 text-gray-600">
-              <li
-                v-for="(spec, i) in produtoAtual.specs"
-                :key="i"
-                class="flex gap-2"
-              >
+              <li v-for="(spec, i) in produtoAtual.specs" :key="i" class="flex gap-2">
                 <span>•</span><span>{{ spec }}</span>
               </li>
             </ul>
@@ -62,36 +49,23 @@
             <div class="inline-flex items-center rounded-md">
               <button
                 class="w-10 h-10 flex items-center justify-center text-gray-700 hover:bg-gray-50 disabled:opacity-10 border border-gray-300"
-                :disabled="quantidade <= 1"
-                @click="decrementarQuantidade"
-                aria-label="Diminuir"
-              >
-                <font-awesome-icon :icon="['fas','minus']" />
+                :disabled="quantidade <= 1" @click="decrementarQuantidade" aria-label="Diminuir">
+                <font-awesome-icon :icon="['fas', 'minus']" />
               </button>
-              <input
-                class="w-50 h-10 text-center outline-none"
-                type="text"
-                min="1"
-                :disabled="true"
-                v-model.number="quantidade"
-                @blur="normalizarQuantidade"
-                aria-label="Quantidade"
-              />
+              <input class="w-50 h-10 text-center outline-none" type="text" min="1" :disabled="true"
+                v-model.number="quantidade" @blur="normalizarQuantidade" aria-label="Quantidade" />
               <button
                 class="w-10 h-10 flex items-center justify-center text-gray-700 hover:bg-gray-50 border border-gray-300"
-                @click="incrementarQuantidade"
-                aria-label="Aumentar"
-              >
-                <font-awesome-icon :icon="['fas','plus']" />
+                @click="incrementarQuantidade" aria-label="Aumentar">
+                <font-awesome-icon :icon="['fas', 'plus']" />
               </button>
             </div>
           </div>
 
           <button
             class="mt-6 w-full h-12 inline-flex justify-center items-center gap-3 bg-black text-white rounded-md hover:bg-neutral-900 transition"
-            @click="adicionarAoCarrinho()"
-          >
-            <font-awesome-icon :icon="['fas','bag-shopping']" />
+            @click="adicionarAoCarrinho()">
+            <font-awesome-icon :icon="['fas', 'bag-shopping']" />
             ADICIONAR AO CARRINHO
           </button>
         </div>
@@ -106,7 +80,6 @@
 
 
 <script setup>
-import Header from '@/components/home/Header.vue'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
@@ -128,7 +101,7 @@ const catalogoProdutos = [
       'Vaso artesanal em cerâmica branca com acabamento fosco. Perfeito para ambientes minimalistas.',
     price: 189.9,
     image:
-      'https://images.unsplash.com/photo-1615874959474-d609969a20ed?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dmFzb3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60',
     specs: ['Material: Cerâmica', 'Altura: 25cm', 'Diâmetro: 18cm', 'Cor: Branco']
   }
 ]
@@ -161,7 +134,7 @@ function adicionarAoCarrinho() {
 }
 
 const fallbackImage =
-  'https://images.unsplash.com/photo-1540574163026-643ea20ade25?q=80&w=1470&auto=format&fit=crop'
+  'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dmFzb3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60'
 
 function formatBRL(v) {
   try {

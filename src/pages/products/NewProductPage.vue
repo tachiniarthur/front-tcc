@@ -1,0 +1,117 @@
+<template>
+  <div class="min-h-screen bg-white pt-24">
+    <div class="max-w-7xl mx-auto px-6">
+      <RouterLink to="/home" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mt-4">
+        <font-awesome-icon :icon="['fas', 'arrow-left']" />
+        Voltar
+      </RouterLink>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-6 mt-6 mb-24">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 h-[520px] lg:h-[560px]">
+        <div class="rounded-md overflow-hidden h-full">
+          <FilePond v-model="files" name="image" label-idle="Arraste a imagem ou clique" :allow-multiple="true"
+            accepted-file-types="image/*" class="h-full" />
+        </div>
+
+        <div class="h-full flex flex-col">
+          <h3 class="text-lg tracking-widest text-gray-600 ">NOVO PRODUTO</h3>
+
+          <form @submit.prevent="handleSubmit" class="mt-6 space-y-6 flex-1 overflow-auto flex flex-col">
+            <div>
+              <label for="title" class="block text-sm tracking-widest text-gray-700">Nome do produto</label>
+              <input id="title" v-model="title" type="text" placeholder="Digite o nome do produto"
+                class="mt-1 p-3.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500 sm:text-sm" />
+            </div>
+
+            <div>
+              <label for="description" class="block text-sm tracking-widest text-gray-700">Descrição</label>
+              <textarea id="description" rows="4" placeholder="Digite a descrição do produto"
+                class="mt-1 p-3.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500 sm:text-sm"></textarea>
+            </div>
+
+            <div>
+              <label for="price" class="block text-sm tracking-widest text-gray-700">Preço</label>
+              <input id="price" v-model.number="price" type="number" placeholder="Digite o preço do produto"
+                class="mt-1 p-3.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500 sm:text-sm" />
+            </div>
+
+            <div>
+              <label for="stock" class="block text-sm tracking-widest text-gray-700">Quantidade em estoque</label>
+              <input id="stock" v-model.number="stock" type="number" placeholder="Digite a quantidade em estoque"
+                class="mt-1 p-3.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500 sm:text-sm" />
+            </div>
+
+            <button type="submit" :disabled="loading"
+              class="w-full h-10 text-md font-semibold bg-black text-white hover:bg-gray-900 transition hover:cursor-pointer mt-auto disabled:opacity-50">
+              <span v-if="!loading">Salvar Produto</span>
+              <span v-else>Enviando...</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</template>
+
+
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import vueFilePond from 'vue-filepond'
+import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
+import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
+import http from '@/services/http'
+
+const FilePond = vueFilePond(FilePondPluginImagePreview, FilePondPluginFileValidateType)
+
+const files = ref([])
+
+
+const title = ref('')
+const description = ref('')
+const price = ref(null)
+const stock = ref(null)
+const loading = ref(false)
+
+const router = useRouter()
+
+async function handleSubmit() {
+  loading.value = true
+  try {
+    const form = new FormData()
+    form.append('title', title.value)
+    form.append('description', description.value)
+    form.append('price', price.value ?? '')
+    form.append('stock', stock.value ?? '')
+
+    const fileItem = files.value && files.value.length ? files.value[0] : null
+    const fileObject = fileItem?.file ?? fileItem
+    if (fileObject) {
+      form.append('image', fileObject)
+    }
+
+    await http.post('/products', form)
+    alert('Produto salvo com sucesso!')
+    router.push({ name: 'produtos' })
+  } catch (err) {
+    console.error(err)
+    alert('Erro ao salvar o produto')
+  } finally {
+    loading.value = false
+  }
+}
+
+
+</script>
+
+<style scoped>
+::v-deep .filepond--root {
+  height: 100% !important;
+}
+
+::v-deep .filepond--panel-root,
+::v-deep .filepond--panel {
+  height: 100% !important
+}
+</style>
