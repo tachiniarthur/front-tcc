@@ -173,6 +173,7 @@ async function handleSubmit() {
         phone: formData.phone,
         email: formData.email,
         password: formData.password,
+        password_confirmation: formData.confirmPassword,
       })
 
     } catch (error) {

@@ -2,24 +2,27 @@ import axios from 'axios'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  
 })
 
 http.interceptors.request.use(
   (config) => {
     config.headers = config.headers || {}
 
-    
-    const token = localStorage.getItem('token')
+    let token = localStorage.getItem('token')
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      // Strip BOM and non-ASCII characters that break XMLHttpRequest headers
+      token = token.replace(/[^\x20-\x7E]/g, '')
+      if (token) {
+        config.headers.Authorization = 'Bearer ' + token
+      }
     }
 
-    
     config.headers.Accept = config.headers.Accept || 'application/json'
 
-    
-    if (!(config.data instanceof FormData)) {
+    if (config.data instanceof FormData) {
+      // Let the browser set Content-Type with the correct boundary
+      delete config.headers['Content-Type']
+    } else {
       config.headers['Content-Type'] = config.headers['Content-Type'] || 'application/json'
     }
 

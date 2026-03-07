@@ -1,7 +1,7 @@
 <template>
   <header class="fixed top-0 inset-x-0 z-30 bg-white/70 backdrop-blur-md border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-      <RouterLink to="/" class="text-sm tracking-widest font-light">ESSENCE</RouterLink>
+      <RouterLink to="/home" class="text-sm tracking-widest font-light">ESSENCE</RouterLink>
 
       <div class="flex items-center gap-4">
         <button
@@ -14,6 +14,18 @@
             {{ cart.totalItems }}
           </span>
         </button>
+
+        <RouterLink to="/orders"
+          class="inline-flex items-center px-2.5 py-2 text-sm hover:bg-gray-200 transition"
+          aria-label="Meus pedidos">
+          <font-awesome-icon :icon="['fas', 'box']" />
+        </RouterLink>
+
+        <RouterLink to="/profile"
+          class="inline-flex items-center px-2.5 py-2 text-sm hover:bg-gray-200 transition"
+          aria-label="Meu perfil">
+          <font-awesome-icon :icon="['fas', 'user']" />
+        </RouterLink>
       </div>
     </div>
   </header>

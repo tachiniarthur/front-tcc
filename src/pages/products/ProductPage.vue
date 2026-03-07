@@ -1,144 +1,132 @@
 <template>
   <div class="min-h-screen bg-white pt-24">
-
     <div class="max-w-7xl mx-auto px-6">
-      <RouterLink to="/home" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mt-4">
-        <font-awesome-icon :icon="['fas', 'arrow-left']" />
-        Voltar
-      </RouterLink>
-    </div>
 
+      <div v-if="!product" class="py-20 text-center">
+        <p class="text-gray-400 text-sm">Carregando...</p>
+      </div>
 
-    <main class="max-w-7xl mx-auto px-6 mt-6 mb-24">
-      <div v-if="produtoAtual" class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <template v-else>
+        <RouterLink to="/home" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mt-4">
+          <font-awesome-icon :icon="['fas', 'arrow-left']" />
+          Voltar
+        </RouterLink>
 
-        <div class="rounded-md overflow-hidden bg-gray-50">
-          <img :src="produtoAtual.image || fallbackImage" :alt="produtoAtual.title"
-            class="w-full h-[520px] lg:h-[560px] object-cover" />
-        </div>
-
-
-        <div>
-          <h1 class="text-3xl font-medium tracking-tight text-gray-900">
-            {{ produtoAtual.title }}
-          </h1>
-
-          <div class="mt-3 text-2xl text-gray-900">
-            {{ formatBRL(produtoAtual.price) }}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-6 mb-24">
+          <div class="aspect-square overflow-hidden bg-gray-50">
+            <img :src="product.image_url || '/placeholder.png'" :alt="product.name"
+              class="w-full h-full object-cover" />
           </div>
 
-          <p v-if="produtoAtual.description" class="mt-6 text-gray-600 leading-relaxed max-w-2xl">
-            {{ produtoAtual.description }}
-          </p>
+          <div class="flex flex-col">
+            <h1 class="text-2xl font-light tracking-wide">{{ product.name }}</h1>
+            <p class="text-gray-500 text-sm mt-3 leading-relaxed">{{ product.description }}</p>
+            <p class="text-lg mt-4">R$ {{ parseFloat(product.price).toFixed(2) }}</p>
 
-          <section v-if="produtoAtual.specs?.length" class="mt-10">
-            <h2 class="text-xs font-semibold tracking-[0.2em] text-gray-700">
-              CARACTERÍSTICAS
-            </h2>
-            <ul class="mt-4 space-y-1.5 text-gray-600">
-              <li v-for="(spec, i) in produtoAtual.specs" :key="i" class="flex gap-2">
-                <span>•</span><span>{{ spec }}</span>
-              </li>
-            </ul>
-          </section>
+            <p class="text-xs mt-3" :class="maxAddable > 0 ? 'text-gray-400' : 'text-red-500'">
+              {{ maxAddable > 0 ? `${maxAddable} unidade(s) disponivel(is)` : 'Produto sem estoque' }}
+            </p>
 
-          <div class="mt-10">
-            <label class="block text-[11px] font-medium text-gray-700 tracking-[0.2em] mb-3">
-              QUANTIDADE
-            </label>
-            <div class="inline-flex items-center rounded-md">
-              <button
-                class="w-10 h-10 flex items-center justify-center text-gray-700 hover:bg-gray-50 disabled:opacity-10 border border-gray-300"
-                :disabled="quantidade <= 1" @click="decrementarQuantidade" aria-label="Diminuir">
-                <font-awesome-icon :icon="['fas', 'minus']" />
-              </button>
-              <input class="w-50 h-10 text-center outline-none" type="text" min="1" :disabled="true"
-                v-model.number="quantidade" @blur="normalizarQuantidade" aria-label="Quantidade" />
-              <button
-                class="w-10 h-10 flex items-center justify-center text-gray-700 hover:bg-gray-50 border border-gray-300"
-                @click="incrementarQuantidade" aria-label="Aumentar">
-                <font-awesome-icon :icon="['fas', 'plus']" />
+            <div class="flex-1"></div>
+
+            <div class="flex items-center gap-3 mt-6">
+              <label for="qty" class="text-xs tracking-widest text-gray-400 uppercase">Qtd</label>
+              <input id="qty" type="number" v-model.number="quantity" :min="1" :max="maxAddable"
+                class="w-16 h-10 border border-gray-300 text-center text-sm focus:border-black outline-none transition"
+                :disabled="maxAddable <= 0" />
+            </div>
+
+            <button @click="handleAddToCart" :disabled="maxAddable <= 0 || quantity < 1"
+              class="mt-6 w-full h-12 text-sm font-semibold tracking-widest uppercase transition" :class="maxAddable > 0 && quantity >= 1
+                ? 'bg-black text-white hover:bg-gray-900 cursor-pointer'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'">
+              {{ maxAddable > 0 ? 'Adicionar ao Carrinho' : 'Indisponivel' }}
+            </button>
+
+            <div v-if="auth.isAdmin" class="flex gap-3 mt-4">
+              <router-link :to="`/edit-product/${product.id}`"
+                class="flex-1 h-10 flex items-center justify-center text-xs font-semibold tracking-widest uppercase border border-black text-black hover:bg-gray-100 transition">
+                Editar
+              </router-link>
+              <button @click="handleDelete" :disabled="deleting"
+                class="flex-1 h-10 text-xs font-semibold tracking-widest uppercase border border-red-500 text-red-500 hover:bg-red-50 transition disabled:opacity-50">
+                {{ deleting ? 'Removendo...' : 'Remover' }}
               </button>
             </div>
           </div>
-
-          <button
-            class="mt-6 w-full h-12 inline-flex justify-center items-center gap-3 bg-black text-white rounded-md hover:bg-neutral-900 transition"
-            @click="adicionarAoCarrinho()">
-            <font-awesome-icon :icon="['fas', 'bag-shopping']" />
-            ADICIONAR AO CARRINHO
-          </button>
         </div>
-      </div>
-
-      <div v-else class="py-20 text-center text-gray-600">
-        Produto não encontrado.
-      </div>
-    </main>
+      </template>
+    </div>
   </div>
 </template>
 
-
 <script setup>
-import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { useCartStore } from '@/stores/cart'
+import { ref, computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useCartStore } from '@/stores/cart.js';
+import { useAuthStore } from '@/stores/auth.js';
+import ProductService from '@/services/internal/Product/ProductService';
 
-const route = useRoute()
-const cart = useCartStore()
+const route = useRoute();
+const router = useRouter();
+const cartStore = useCartStore();
+const auth = useAuthStore();
 
-const idProduto = computed(() => {
-  const raw = route.params.id
-  const n = Number(raw)
-  return Number.isNaN(n) ? null : n
-})
+const product = ref(null);
+const quantity = ref(1);
+const deleting = ref(false);
 
-const catalogoProdutos = [
-  {
-    id: 2,
-    title: 'Vaso Cerâmica Branco',
-    description:
-      'Vaso artesanal em cerâmica branca com acabamento fosco. Perfeito para ambientes minimalistas.',
-    price: 189.9,
-    image:
-      'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dmFzb3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60',
-    specs: ['Material: Cerâmica', 'Altura: 25cm', 'Diâmetro: 18cm', 'Cor: Branco']
+const cartItem = computed(() =>
+  product.value ? cartStore.getItemByProductId(product.value.id) : null
+);
+
+// maxAddable = how many more units the user can add to their cart.
+// When the product is already in the cart, the cart API returns
+// item.available_stock = stock - reservedByOthers - userQty (ready to use).
+// When NOT in cart, product.available_stock = stock - allReserved (same thing
+// since user has 0 reserved).
+const maxAddable = computed(() => {
+  if (!product.value) return 0;
+  if (cartItem.value) {
+    return cartItem.value.available_stock ?? 0;
   }
-]
+  return product.value.available_stock ?? product.value.stock;
+});
 
-const produtoRota = route?.state?.product || null
-
-const produtoAtual = computed(() => {
-  if (produtoRota) return produtoRota
-  const id = idProduto.value
-  if (id === null) return null
-  return catalogoProdutos.find(p => p.id === id) ?? null
-})
-const quantidade = ref(1)
-function incrementarQuantidade() { quantidade.value++ }
-function decrementarQuantidade() { quantidade.value = Math.max(1, quantidade.value - 1) }
-function normalizarQuantidade() {
-  if (!quantidade.value || quantidade.value < 1) quantidade.value = 1
-  quantidade.value = Math.floor(quantidade.value)
+async function loadProduct() {
+  const res = await ProductService.get(route.params.id);
+  product.value = res.product;
 }
 
-function adicionarAoCarrinho() {
-  if (!produtoAtual.value) return
-  cart.addToCart({
-    id: produtoAtual.value.id,
-    title: produtoAtual.value.title,
-    price: produtoAtual.value.price,
-    image: produtoAtual.value.image,
-    qty: quantidade.value,
-  })
+async function handleAddToCart() {
+  if (quantity.value > maxAddable.value) {
+    alert(`Estoque insuficiente. Voce pode adicionar no maximo ${maxAddable.value} unidade(s).`);
+    return;
+  }
+
+  const result = await cartStore.addToCart(product.value.id, quantity.value);
+  if (result.success) {
+    await loadProduct();
+    quantity.value = 1;
+  }
 }
 
-const fallbackImage =
-  'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dmFzb3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60'
-
-function formatBRL(v) {
+async function handleDelete() {
+  if (!confirm('Tem certeza que deseja remover este produto?')) return;
+  deleting.value = true;
   try {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0)
-  } catch { return `R$ ${Number(v || 0).toFixed(2)}` }
+    await ProductService.remove(product.value.id);
+    router.push({ name: 'Inicio' });
+  } catch (err) {
+    const msg = err?.data?.message || err?.message || 'Erro ao remover produto.';
+    alert(msg);
+  } finally {
+    deleting.value = false;
+  }
 }
+
+onMounted(async () => {
+  await cartStore.fetchCart();
+  await loadProduct();
+});
 </script>

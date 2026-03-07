@@ -8,21 +8,39 @@
     </div>
 
     <main class="max-w-7xl mx-auto px-6 mt-6 mb-24">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <div class="flex flex-col">
-          <div class="rounded-md overflow-hidden flex-1">
+      <div v-if="loadingPage" class="py-20 text-center text-gray-600">Carregando...</div>
+
+      <div v-else-if="notFound" class="py-20 text-center text-gray-600">Produto nao encontrado.</div>
+
+      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div>
+          <div v-if="!showFilePond"
+            class="rounded-md overflow-hidden bg-gray-50 h-full max-h-[600px] relative cursor-pointer"
+            @click="showFilePond = true">
+            <img :src="currentImageUrl || fallbackImage" alt="Imagem atual do produto"
+              class="w-full h-full object-cover" />
+            <div
+              class="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition flex items-center justify-center">
+              <span class="text-white text-sm font-medium">Clique para trocar a imagem</span>
+            </div>
+          </div>
+          <div v-else class="rounded-md overflow-hidden h-full max-h-[600px] relative">
             <FilePond ref="pond" name="image"
-              label-idle="Arraste a imagem ou <span class='filepond--label-action'>clique para selecionar</span>"
+              label-idle="Arraste a nova imagem ou <span class='filepond--label-action'>clique para selecionar</span>"
               :allow-multiple="false" accepted-file-types="image/*" :instant-upload="false" :allow-process="false"
               @addfile="onAddFile" @removefile="onRemoveFile" class="h-full" />
+            <button v-if="showFilePond" type="button" @click="cancelImageChange"
+              class="absolute bottom-2 left-2 text-sm text-gray-600 bg-white/80 px-3 py-1 rounded hover:bg-white transition">
+              Manter imagem atual
+            </button>
           </div>
           <p v-if="errors.image" class="text-red-500 text-xs mt-1">{{ errors.image }}</p>
         </div>
 
-        <div class="h-full flex flex-col">
-          <h3 class="text-lg tracking-widest text-gray-600">NOVO PRODUTO</h3>
+        <div class="flex flex-col">
+          <h3 class="text-lg tracking-widest text-gray-600">EDITAR PRODUTO</h3>
 
-          <form @submit.prevent="handleSubmit" class="mt-6 space-y-6 flex-1 overflow-auto flex flex-col">
+          <form @submit.prevent="handleSubmit" class="mt-6 space-y-6 flex-1 flex flex-col">
             <div>
               <label for="name" class="block text-sm tracking-widest text-gray-700">Nome do produto <span
                   class="text-red-500">*</span></label>
@@ -59,9 +77,14 @@
               <p v-if="errors.stock" class="text-red-500 text-xs mt-1">{{ errors.stock }}</p>
             </div>
 
+            <div class="flex items-center gap-3">
+              <input id="active" v-model="active" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
+              <label for="active" class="text-sm tracking-widest text-gray-700">Produto ativo</label>
+            </div>
+
             <button type="submit" :disabled="loading"
               class="w-full h-10 text-md font-semibold bg-black text-white hover:bg-gray-900 transition hover:cursor-pointer mt-auto disabled:opacity-50">
-              <span v-if="!loading">Salvar Produto</span>
+              <span v-if="!loading">Salvar Alteracoes</span>
               <span v-else>Enviando...</span>
             </button>
           </form>
@@ -72,8 +95,8 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import vueFilePond from 'vue-filepond'
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
@@ -81,18 +104,54 @@ import ProductService from '@/services/internal/Product/ProductService'
 
 const FilePond = vueFilePond(FilePondPluginImagePreview, FilePondPluginFileValidateType)
 
+const route = useRoute()
+const router = useRouter()
+
 const pond = ref(null)
 const imageFile = ref(null)
+const showFilePond = ref(false)
+const currentImageUrl = ref('')
+const fallbackImage = 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=500&q=60'
+
 const name = ref('')
 const description = ref('')
 const price = ref(null)
 const stock = ref(null)
+const active = ref(true)
+
+const loadingPage = ref(true)
 const loading = ref(false)
+const notFound = ref(false)
 const errors = reactive({})
 
-const router = useRouter()
+let productId = null
 
 
+
+onMounted(async () => {
+  productId = route.params.id
+  if (!productId) {
+    notFound.value = true
+    loadingPage.value = false
+    return
+  }
+
+  try {
+    const res = await ProductService.get(productId)
+    const p = res.product
+    name.value = p.name || ''
+    description.value = p.description || ''
+    price.value = p.price != null ? Number(p.price) : null
+    stock.value = p.stock != null ? Number(p.stock) : null
+    active.value = !!p.active
+    currentImageUrl.value = p.image_url || ''
+  } catch (e) {
+    console.error('Erro ao carregar produto:', e)
+    notFound.value = true
+  } finally {
+    loadingPage.value = false
+  }
+})
 
 function onAddFile(error, fileItem) {
   if (error) return
@@ -101,6 +160,11 @@ function onAddFile(error, fileItem) {
 }
 
 function onRemoveFile() {
+  imageFile.value = null
+}
+
+function cancelImageChange() {
+  showFilePond.value = false
   imageFile.value = null
 }
 
@@ -124,7 +188,7 @@ function validate() {
     errors.stock = 'Estoque e obrigatorio e deve ser maior ou igual a zero.'
     valid = false
   }
-  if (!imageFile.value) {
+  if (!currentImageUrl.value && !imageFile.value) {
     errors.image = 'Imagem do produto e obrigatoria.'
     valid = false
   }
@@ -137,16 +201,20 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await ProductService.create({
+    const payload = {
       name: name.value.trim(),
       description: description.value.trim(),
       price: Number(price.value),
       stock: Number(stock.value),
-      image: imageFile.value,
-      active: 1,
-    })
+      active: active.value ? 1 : 0,
+    }
 
-    alert('Produto salvo com sucesso!')
+    if (imageFile.value) {
+      payload.image = imageFile.value
+    }
+
+    await ProductService.update(productId, payload)
+    alert('Produto atualizado com sucesso!')
     router.push({ name: 'produtos' })
   } catch (err) {
     console.error(err)
@@ -156,7 +224,7 @@ async function handleSubmit() {
         errors[field] = serverErrors[field][0]
       })
     } else {
-      const msg = err?.data?.message || err?.message || 'Erro ao salvar o produto'
+      const msg = err?.data?.message || err?.message || 'Erro ao atualizar o produto'
       alert(msg)
     }
   } finally {

@@ -5,6 +5,7 @@
 
   <transition name="slide">
     <aside v-if="ui.cartOpen" class="fixed inset-y-0 right-0 z-50 w-full sm:max-w-lg bg-white flex flex-col">
+
       <div class="flex items-center justify-between px-6 py-5">
         <h2 class="text-sm font-light tracking-widest text-gray-700">CARRINHO</h2>
         <button
@@ -20,15 +21,14 @@
         </div>
 
         <ul v-else class="space-y-6">
-          <li v-for="item in cart.items" :key="item.id" class="flex items-start justify-between gap-4">
+          <li v-for="item in sortedItems" :key="item.id" class="flex items-start justify-between gap-4">
             <div class="flex items-start gap-4">
               <div class="w-24 h-24 bg-gray-100 overflow-hidden">
-                <img :src="item.image" class="w-full h-full object-cover" />
+                <img :src="item.product.image_url || '/placeholder.png'" class="w-full h-full object-cover" />
               </div>
-
               <div class="min-w-0">
-                <div class="text-sm font-light text-gray-900 truncate">{{ item.title }}</div>
-                <div class="text-sm text-gray-500">R$ {{ (item.price).toFixed(2) }}</div>
+                <div class="text-sm font-light text-gray-900 truncate">{{ item.product.name }}</div>
+                <div class="text-sm text-gray-500">R$ {{ parseFloat(item.product.price).toFixed(2) }}</div>
 
                 <div class="mt-3 flex items-center gap-2">
                   <button
@@ -36,13 +36,17 @@
                     @click="decrease(item)" aria-label="Diminuir">
                     <font-awesome-icon :icon="['fas', 'minus']" class="text-xs" />
                   </button>
-                  <div class="w-8 text-center text-sm font-medium">{{ item.qty }}</div>
+                  <div class="w-8 text-center text-sm font-medium">{{ item.quantity }}</div>
                   <button
                     class="h-8 w-8 inline-flex items-center justify-center rounded border border-gray-300 hover:bg-gray-50 text-gray-700 hover:cursor-pointer"
+                    :disabled="item.quantity >= maxQuantity(item)"
+                    :class="{ 'opacity-40 cursor-not-allowed': item.quantity >= maxQuantity(item) }"
                     @click="increase(item)" aria-label="Aumentar">
                     <font-awesome-icon :icon="['fas', 'plus']" class="text-xs" />
                   </button>
                 </div>
+
+                <p v-if="item.available_stock <= 0" class="text-xs text-red-500 mt-1">Estoque esgotado</p>
               </div>
             </div>
 
@@ -60,7 +64,7 @@
           <span class="text-gray-600">Total</span>
           <span class="font-light text-gray-900">R$ {{ cart.totalPrice.toFixed(2) }}</span>
         </div>
-        <RouterLink to="/checkout">
+        <RouterLink to="/checkout" @click="ui.closeCart()">
           <button
             class="w-full h-11 bg-black text-white text-sm tracking-wider hover:opacity-90 transition disabled:opacity-50 hover:cursor-pointer"
             :disabled="cart.items.length === 0">
@@ -68,20 +72,39 @@
           </button>
         </RouterLink>
       </div>
+
     </aside>
   </transition>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useUiStore } from '@/stores/ui'
 import { useCartStore } from '@/stores/cart'
 
 const ui = useUiStore()
 const cart = useCartStore()
 
-function increase(item) { cart.updateQuantity(item.id, item.qty + 1) }
-function decrease(item) { item.qty <= 1 ? cart.removeFromCart(item.id) : cart.updateQuantity(item.id, item.qty - 1) }
-function remove(id) { cart.removeFromCart(id) }
+const sortedItems = computed(() =>
+  [...cart.items].sort((a, b) => b.quantity - a.quantity)
+)
+
+function maxQuantity(item) {
+  return item.quantity + item.available_stock
+}
+
+function increase(item) {
+  if (item.quantity >= maxQuantity(item)) return
+  cart.updateQuantity(item.id, item.quantity + 1)
+}
+
+function decrease(item) {
+  item.quantity <= 1 ? cart.removeItem(item.id) : cart.updateQuantity(item.id, item.quantity - 1)
+}
+
+function remove(id) {
+  cart.removeItem(id)
+}
 </script>
 
 <style scoped>
@@ -89,7 +112,6 @@ function remove(id) { cart.removeFromCart(id) }
 .fade-leave-active {
   transition: opacity .25s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
@@ -99,22 +121,18 @@ function remove(id) { cart.removeFromCart(id) }
 .slide-leave-active {
   transition: transform .6s cubic-bezier(.2, .9, .2, 1), opacity .6s ease;
 }
-
 .slide-enter-from {
   transform: translateX(100%);
   opacity: 0;
 }
-
 .slide-enter-to {
   transform: translateX(0);
   opacity: 1;
 }
-
 .slide-leave-from {
   transform: translateX(0);
   opacity: 1;
 }
-
 .slide-leave-to {
   transform: translateX(100%);
   opacity: 0;

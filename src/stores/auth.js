@@ -1,6 +1,7 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import http from '@/services/http'
 import router from '@/router'
+import { useCartStore } from '@/stores/cart'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -10,6 +11,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isLogged: (state) => !!state.token,
+    isAdmin: (state) => !!state.user?.is_admin,
   },
 
   actions: {
@@ -28,32 +30,29 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async loginWithCredentials({ email, password }) {
-      
       const payload = { email, password }
-
       const res = await http.post('/login', payload)
 
       const token = res.data?.token ?? (typeof res.data === 'string' ? res.data : null)
-      if (!token) throw new Error('Token não retornado pelo servidor')
+      if (!token) throw new Error('Token nao retornado pelo servidor')
 
       this.setToken(token)
 
-      
       try {
-        const userRes = await http.get('/api/user')
+        const userRes = await http.get('/user')
         this.setUser(userRes.data)
       } catch (e) {
-        // Log and continue — user info isn't critical for completing login flow
-  // (keeps linter happy and avoids silently swallowing errors)
-  console.warn('Failed to fetch current user after login:', e)
+        console.warn('Failed to fetch current user after login:', e)
       }
+
+      // Fetch the user's cart from the backend
+      const cart = useCartStore()
+      await cart.fetchCart()
 
       router.push({ name: 'Inicio' })
     },
 
     async registerWithCredentials(data) {
-      
-      
       const res = await http.post('/create-account', data)
 
       const token = res.data?.token ?? null
@@ -66,24 +65,29 @@ export const useAuthStore = defineStore('auth', {
       if (user) {
         this.setUser(user)
       } else {
-        
         try {
-          const userRes = await http.get('/api/user')
+          const userRes = await http.get('/user')
           this.setUser(userRes.data)
         } catch (e) {
           console.warn('Failed to fetch current user after register:', e)
         }
       }
 
+      // Fetch the user's cart from the backend
+      const cart = useCartStore()
+      await cart.fetchCart()
+
       router.push({ name: 'Inicio' })
     },
 
     async logout() {
-      
+      // Clear cart state before logout
+      const cart = useCartStore()
+      cart.clearCart()
+
       try {
         await http.post('/logout')
       } catch (e) {
-        // logout on server failed or endpoint missing — proceed client-side
         console.warn('Server logout failed (ignoring):', e)
       }
 
@@ -104,15 +108,18 @@ export const useAuthStore = defineStore('auth', {
       this.token = token
 
       try {
-        const userRes = await http.get('/api/user')
+        const userRes = await http.get('/user')
         this.user = userRes.data
       } catch (e) {
         console.warn('Auth check failed, clearing token:', e)
-
         this.setToken(null)
         this.setUser(null)
         return false
       }
+
+      // Fetch the user's cart on auth check
+      const cart = useCartStore()
+      await cart.fetchCart()
 
       return true
     },

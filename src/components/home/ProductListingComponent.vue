@@ -1,68 +1,79 @@
 <template>
-  <section class="max-w-7xl mx-auto px-6" :class="isHome ? 'py-20' : 'pt-8 pb-30'">
-    <h3 v-if="isHome" class="text-center text-lg tracking-widest text-gray-600 mb-12">ITENS</h3>
-    <div class="flex mb-8" v-else>
-      <h3 class="text-lg tracking-widest text-gray-600 ">LISTA DE PRODUTOS</h3>
-      <RouterLink to="/add-product"
-        class="ml-auto px-4 py-2 border border-gray-300 bg-black text-white text-sm tracking-wide hover:bg-gray-900 transition hover:cursor-pointer"
-        @click="$emit('add-product')">
-        ADICIONAR PRODUTO
-      </RouterLink>
-    </div>
+  <div class="group">
+    <router-link :to="`/products/${product.id}`" class="block">
+      <div class="aspect-square overflow-hidden bg-gray-50">
+        <img :src="product.image_url || '/placeholder.png'" :alt="product.name"
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+      </div>
+    </router-link>
+    <div class="mt-3">
+      <router-link :to="`/products/${product.id}`" class="block">
+        <h3 class="text-sm tracking-wide">{{ product.name }}</h3>
+      </router-link>
+      <p class="text-sm text-gray-500 mt-1">R$ {{ parseFloat(product.price).toFixed(2) }}</p>
+      <p class="text-xs mt-1" :class="available > 0 ? 'text-gray-400' : 'text-red-500'">
+        {{ available > 0 ? `${available} em estoque` : 'Sem estoque' }}
+      </p>
+      <button @click="handleAdd" :disabled="available <= 0"
+        class="mt-3 w-full h-10 text-xs font-semibold tracking-widest uppercase transition" :class="available > 0
+          ? 'bg-black text-white hover:bg-gray-900 cursor-pointer'
+          : 'bg-gray-200 text-gray-400 cursor-not-allowed'">
+        {{ available > 0 ? 'Adicionar' : 'Indisponivel' }}
+      </button>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-      <div v-for="product in products" :key="product.id" class="flex flex-col items-left group">
-        <RouterLink :to="{ name: 'produto', params: { id: product.id } }">
-          <div class="overflow-hidden rounded-lg w-full aspect-square bg-white block">
-            <img :src="product.image" :alt="product.title"
-              class="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-          </div>
-        </RouterLink>
-
-        <div class="mt-4">
-          <h4 class="font-light text-gray-700 text-lg">{{ product.title }}</h4>
-          <p class="text-gray-500 mt-1 text-sm">R$ {{ product.price.toFixed(2) }}</p>
-
-          <button
-            class="mt-4 w-100 px-8 py-2 border border-gray-300 bg-black text-white text-sm tracking-wide hover:bg-gray-900 transition hover:cursor-pointer"
-            @click="addToCart(product)">
-            ADICIONAR
-          </button>
-        </div>
+      <div v-if="auth.isAdmin" class="flex gap-2 mt-2">
+        <router-link :to="`/edit-product/${product.id}`"
+          class="flex-1 h-9 flex items-center justify-center text-xs font-semibold tracking-widest uppercase border border-black text-black hover:bg-gray-100 transition">
+          Editar
+        </router-link>
+        <button @click="handleDelete" :disabled="deleting"
+          class="flex-1 h-9 text-xs font-semibold tracking-widest uppercase border border-red-500 text-red-500 hover:bg-red-50 transition disabled:opacity-50">
+          {{ deleting ? '...' : 'Remover' }}
+        </button>
       </div>
     </div>
-
-    <div v-if="isHome" class="flex justify-center mt-12">
-      <RouterLink to="/products" class="px-6 text-black text-sm hover:underline transition hover:cursor-pointer">
-        VER TODOS OS PRODUTOS
-      </RouterLink>
-    </div>
-  </section>
+  </div>
 </template>
 
 <script setup>
-import { useCartStore } from '@/stores/cart'
+import { ref, computed } from 'vue';
+import { useCartStore } from '@/stores/cart.js';
+import { useAuthStore } from '@/stores/auth.js';
+import ProductService from '@/services/internal/Product/ProductService';
 
-const cart = useCartStore()
+const props = defineProps({
+  product: { type: Object, required: true },
+});
 
-defineProps({
-  products: {
-    type: Array,
-    required: true,
-  },
-  isHome: {
-    type: Boolean,
-    default: true,
-  },
-})
+const emit = defineEmits(['updated']);
 
-function addToCart(product) {
-  cart.addToCart({
-    id: product.id,
-    title: product.title,
-    price: product.price,
-    image: product.image,
-  })
-  alert(`${product.title} adicionado ao carrinho!`)
+const cartStore = useCartStore();
+const auth = useAuthStore();
+const deleting = ref(false);
+
+const available = computed(() => props.product.available_stock ?? props.product.stock);
+
+async function handleAdd() {
+  if (available.value <= 0) {
+    alert('Produto sem estoque disponivel.');
+    return;
+  }
+  const result = await cartStore.addToCart(props.product.id, 1);
+  if (result.success) {
+    emit('updated');
+  }
+}
+
+async function handleDelete() {
+  if (!confirm(`Remover "${props.product.name}"?`)) return;
+  deleting.value = true;
+  try {
+    await ProductService.remove(props.product.id);
+    emit('updated');
+  } catch (err) {
+    alert(err?.data?.message || err?.message || 'Erro ao remover produto.');
+  } finally {
+    deleting.value = false;
+  }
 }
 </script>
